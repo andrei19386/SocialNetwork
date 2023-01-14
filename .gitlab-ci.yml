@@ -1,0 +1,38 @@
+image: maven:3-openjdk-18-slim
+
+build-job:
+  stage: build
+  script:
+    - echo "Compiling the code..."
+    - mvn clean package
+    - echo "Compile complete."
+  artifacts:
+    paths:
+      - impl/target
+  tags:
+    - check
+  rules:
+    - when: always
+
+deploy-job:
+  image: docker:19.03.12-dind
+  stage: deploy
+  before_script:
+    - docker logout
+    - docker login -u skillgroup28 -p $PASS
+    - docker stop server || true
+  script:
+    - docker rm -f server || true
+    - echo "Server stopped"
+    - docker rmi skillgroup28/server:latest || true
+    - docker build -t skillgroup28/server .
+    - docker run -d --restart always --name server -e cloud.name=$CLOUD_NAME -e api.key=$API_KEY -e api.secret=$API_SECRET -e db.driver=$DB_DRIVER -e db.url=jdbc:postgresql://194.58.100.187:5432/postgres -e db.user=$DB_USER -e db.pass=$DB_PASS -e jwt.secret=$JWT_SECRET -e jwt.expiration=$JWT_EXPIRATION -e jwt.header=$JWT_HEADER -p 8080:8080 skillgroup28/server:latest
+    - echo "Server run"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "master"'
+    - if: '$CI_COMMIT_BRANCH == "master"'
+  artifacts:
+    paths:
+      - impl/target/impl-0.0.1-SNAPSHOT.jar
+  tags:
+    - push

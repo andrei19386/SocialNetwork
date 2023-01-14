@@ -1,0 +1,20 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+    <changeSet id="createTable setting" author="Daniil Epikhov">
+        <createTable tableName="setting">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="setting_pkey"/>
+            </column>
+            <column name="friend_request" type="boolean"/>
+            <column name="friend_birthday" type="boolean"/>
+            <column name="post_comment" type="boolean"/>
+            <column name="comment_comment" type="boolean"/>
+            <column name="post" type="boolean"/>
+            <column name="message" type="boolean"/>
+            <column name="send_phone_massage" type="boolean"/>
+            <column name="send_email_massage" type="boolean"/>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

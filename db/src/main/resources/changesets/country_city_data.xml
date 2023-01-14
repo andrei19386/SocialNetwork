@@ -1,0 +1,14 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+   <changeSet id="insert cities and countries" author="Andrey Glushko">
+       <sql>
+           insert into countries(title) values ('Российская Федерация'), ('Республика Беларусь')
+       </sql>
+       <sql>
+           insert into cities(title, country_id) values ('Москва',1), ('Санкт-Петербург',1),
+           ('Минск',2), ('Пинск',2)
+       </sql>
+   </changeSet>
+</databaseChangeLog>
