@@ -56,7 +56,7 @@ public class PostSpecification implements Specification<Post> {
     public Specification<Post> getPostsByPersonIds(List<Long> ids) {
         Specification<Post> specification = new PostSpecification();
         for (Long id : ids) {
-            specification = specification.or(getPostsByPersonId(id)).and(getPostsNotIsDeletePerson());
+            specification = specification.or(getPostsByPersonId(id));
         }
         return specification;
     }
@@ -75,6 +75,10 @@ public class PostSpecification implements Specification<Post> {
 
     public Specification<Post> getPostsByType(Type type) {
         return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("type"), type);
+    }
+
+    public Specification<Post> getFalse(){
+        return (root, query, criteriaBuilder) -> criteriaBuilder.isFalse(criteriaBuilder.literal(true));
     }
 
     @Override

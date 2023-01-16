@@ -52,7 +52,9 @@ public class FeedsService {
     private final FriendsRepository friendsRepository;
 
     @Autowired
-    public FeedsService(PostRepository postRepository, PostCommentRepository postCommentRepository, PersonService personService, TagRepository tagRepository, FriendsRepository friendsRepository) {
+    public FeedsService(PostRepository postRepository, PostCommentRepository postCommentRepository,
+                        PersonService personService, TagRepository tagRepository,
+                        FriendsRepository friendsRepository) {
         this.postRepository = postRepository;
         this.personService = personService;
         this.postCommentRepository = postCommentRepository;
@@ -63,7 +65,8 @@ public class FeedsService {
     public void updatePostType() {
         List<Post> posts = postRepository.findAll();
         for (Post post : posts) {
-            if (post.getType().equals(Type.QUEUED) && post.getTime() <= LocalDateTime.now().toEpochSecond(ZoneOffset.systemDefault().getRules().getOffset(LocalDateTime.now()))) {
+            if (post.getType().equals(Type.QUEUED) && post.getTime() <= LocalDateTime.now()
+                    .toEpochSecond(ZoneOffset.systemDefault().getRules().getOffset(LocalDateTime.now()))) {
                 post.setType(Type.POSTED);
                 postRepository.saveAndFlush(post);
             }
@@ -71,25 +74,15 @@ public class FeedsService {
     }
 
     @Transactional
-    public ResponseEntity<Responsable> getObjectResponseEntity(FeedsRequest feedsRequest, boolean isTest) throws JsonProcessingException {
+    public ResponseEntity<Responsable> getObjectResponseEntity(FeedsRequest feedsRequest, boolean isTest)
+            throws JsonProcessingException {
 
         long currentUserId = getCurrentUserId(isTest);
         updatePostType();
-        List<Post> posts = new ArrayList<>();
         List<PostDto> postDtoList = new ArrayList<>();
         Specification<Post> postSpec = generatePostSpecification(feedsRequest);
         Page<Post> pagedPosts = postRepository.findAll(postSpec, feedsRequest.getPageable());
-        if (feedsRequest.getTags() != null && !feedsRequest.getTags().isEmpty()
-        && !feedsRequest.getTags().get(0).equals("")) {
-            List<Tag> tags = getTags(feedsRequest);
-            if (!tags.isEmpty()) {
-                log.debug("CurrentUserId={}", currentUserId);
-                posts = pagedPosts.getContent();
-            }
-        } else {
-            posts = pagedPosts.getContent();
-        }
-
+        List<Post> posts = pagedPosts.getContent();
         log.debug("Find all posts from repository with given Criteria");
 
         if (posts != null && posts.size() != 0) {
@@ -101,15 +94,23 @@ public class FeedsService {
 
     private Specification<Post> generatePostSpecification(FeedsRequest feedsRequest) {
         PostSpecification spec = new PostSpecification();
-        return getPostSpecificationByDate(feedsRequest, spec).and(spec.getPostsByIsDelete(feedsRequest.getIsDelete())).and(getPostSpecificationByAccountId(feedsRequest, spec)).and(getPostSpecificationByFriends(feedsRequest, spec)).and(getPostSpecificationByText(feedsRequest, spec)).and(getPostSpecificationByTags(feedsRequest, spec)).and(getPostSpecificationByAuthor(feedsRequest, spec));
+        return getPostSpecificationByDate(feedsRequest, spec)
+                .and(spec.getPostsByIsDelete(feedsRequest.getIsDelete()))
+                .and(getPostSpecificationByAccountId(feedsRequest, spec))
+                .and(spec.getPostsNotIsDeletePerson())
+                .and(getPostSpecificationByFriends(feedsRequest, spec))
+                .and(getPostSpecificationByText(feedsRequest, spec))
+                .and(getPostSpecificationByTags(feedsRequest, spec))
+                .and(getPostSpecificationByAuthor(feedsRequest, spec));
     }
 
     private Specification<Post> getPostSpecificationByAccountId(FeedsRequest feedsRequest, PostSpecification spec) {
         Specification<Post> accountSpec = spec;
         if (feedsRequest.getAccountId() != null) {
-            accountSpec = accountSpec.and(spec.getPostsByPersonId(feedsRequest.getAccountId())).and(spec.getPostsNotIsDeletePerson()).and(getPostedForNotCurrentPerson(feedsRequest, spec));
+            accountSpec = accountSpec.and(spec.getPostsByPersonId(feedsRequest.getAccountId()))
+                   .and(getPostedForNotCurrentPerson(feedsRequest, spec));
         } else {
-            accountSpec = accountSpec.and(spec.getPostsByType(Type.POSTED)).and(spec.getPostsNotIsDeletePerson());
+            accountSpec = accountSpec.and(spec.getPostsByType(Type.POSTED));
         }
         return accountSpec;
     }
@@ -169,6 +170,8 @@ public class FeedsService {
                 for (Tag tag : tags) {
                     tagsSpec = tagsSpec.or(spec.getPostsByTag(tag));
                 }
+            } else if(!feedsRequest.getTags().isEmpty() && !feedsRequest.getTags().get(0).equals("")){
+                tagsSpec = tagsSpec.and(spec.getFalse());
             }
         }
         return tagsSpec;
